@@ -16,7 +16,7 @@ import '@/mock'
 import env from '../config/env'
 /* eslint-disable */
 //env === 'development' ? require('@/mock') : ''
-require('@/mock');
+
 
 Vue.use(iView, {
   i18n: (key, value) => i18n.t(key, value)
