@@ -44,21 +44,36 @@ export default [
     ]
   },
   {
+    path: '/order',
+    name: '订单',
+    component: Main,
+    children: [
+      {
+        path: '',
+        name: 'place_order',
+        meta: {
+          icon: 'md-basket',
+          title: '刷单'
+        },
+        component: () => import('@/view/order/join-page.vue')
+      }
+    ]
+  },
+  {
     path: '/components',
     name: 'components',
     meta: {
       icon: 'logo-buffer',
-      title: '组件'
+      title: '功能'
     },
     component: Main,
     children: [
-
       {
         path: 'tables_page',
         name: 'tables_page',
         meta: {
           icon: 'md-grid',
-          title: '多功能表格'
+          title: '数据统计'
         },
         component: () => import('@/view/components/tables/tables.vue')
       }
@@ -69,7 +84,7 @@ export default [
     name: 'multilevel',
     meta: {
       icon: 'md-menu',
-      title: '多级菜单'
+      title: '其他功能'
     },
     component: Main,
     children: [

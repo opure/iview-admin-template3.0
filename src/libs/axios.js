@@ -1,8 +1,9 @@
 import Axios from 'axios'
 import baseURL from '_conf/url'
-import { Message } from 'iview'
+import {Message} from 'iview'
 import Cookies from 'js-cookie'
-import { TOKEN_KEY } from '@/libs/util'
+import {TOKEN_KEY} from '@/libs/util'
+
 class httpRequest {
   constructor () {
     this.options = {
@@ -12,18 +13,20 @@ class httpRequest {
     // 存储请求队列
     this.queue = {}
   }
+
   // 销毁请求实例
   destroy (url) {
     delete this.queue[url]
     const queue = Object.keys(this.queue)
     return queue.length
   }
+
   // 请求拦截
   interceptors (instance, url) {
     // 添加请求拦截器
     instance.interceptors.request.use(config => {
       if (!config.url.includes('/users')) {
-        config.headers['x-access-token'] = Cookies.get(TOKEN_KEY)
+        config.headers['Authorization'] = 'Bearer ' + Cookies.get(TOKEN_KEY)
       }
       // Spin.show()
       // 在发送请求之前做些什么
@@ -35,7 +38,7 @@ class httpRequest {
 
     // 添加响应拦截器
     instance.interceptors.response.use((res) => {
-      let { data } = res
+      let {data} = res
       const is = this.destroy(url)
       if (!is) {
         setTimeout(() => {
@@ -60,6 +63,7 @@ class httpRequest {
       return Promise.reject(error)
     })
   }
+
   // 创建实例
   create () {
     let conf = {
@@ -72,10 +76,12 @@ class httpRequest {
     }
     return Axios.create(conf)
   }
+
   // 合并请求实例
   mergeReqest (instances = []) {
     //
   }
+
   // 请求实例
   request (options) {
     var instance = this.create()
@@ -85,4 +91,5 @@ class httpRequest {
     return instance(options)
   }
 }
+
 export default httpRequest

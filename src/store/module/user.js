@@ -1,5 +1,6 @@
-import {login, logout, getUserInfo} from '@/api/user'
-import {setToken, getToken} from '@/libs/util'
+import {getUserInfo, login, logout} from '@/api/user'
+import {getToken, setToken} from '@/libs/util'
+import {Message} from 'iview'
 
 export default {
   state: {
@@ -40,7 +41,7 @@ export default {
           commit('setToken', data.access_token)
           resolve()
         }).catch(err => {
-          Message
+          Message.info('用户名或者密码错误!')
           reject(err)
         })
       })
@@ -48,17 +49,16 @@ export default {
     // 退出登录
     handleLogOut ({state, commit}) {
       return new Promise((resolve, reject) => {
-        logout(state.token).then(() => {
+        /* logout(state.token).then(() => {
           commit('setToken', '')
           commit('setAccess', [])
           resolve()
         }).catch(err => {
           reject(err)
-        })
-        // 如果你的退出登录无需请求接口，则可以直接使用下面三行代码而无需使用logout调用接口
-        // commit('setToken', '')
-        // commit('setAccess', [])
-        // resolve()
+        }) */
+        commit('setToken', '')
+        commit('setAccess', [])
+        resolve()
       })
     },
     // 获取用户相关信息
@@ -66,10 +66,10 @@ export default {
       return new Promise((resolve, reject) => {
         getUserInfo(state.token).then(res => {
           const data = res.data
-          commit('setAvator', data.avator)
-          commit('setUserName', data.user_name)
-          commit('setUserId', data.user_id)
-          commit('setAccess', data.access)
+          // commit('setAvator', data.avator)
+          commit('setUserName', data)
+          // commit('setUserId', data.user_id)
+          commit('setAccess', 'super_admin')
           resolve(data)
         }).catch(err => {
           reject(err)

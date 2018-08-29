@@ -1,13 +1,5 @@
 <template>
   <div>
-    <Row :gutter="20">
-      <i-col span="4" v-for="(infor, i) in inforCardData" :key="`infor-${i}`" style="height: 120px;">
-        <infor-card shadow :color="infor.color" :icon="infor.icon" :icon-size="36">
-          <count-to :end="infor.count" count-class="count-style"/>
-          <p>{{ infor.title }}</p>
-        </infor-card>
-      </i-col>
-    </Row>
     <Row :gutter="20" style="margin-top: 20px;">
       <i-col span="8">
         <Card shadow>
