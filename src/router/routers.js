@@ -45,8 +45,11 @@ export default [
   },
   {
     path: '/order',
-    name: '订单',
     component: Main,
+    meta: {
+      icon: 'logo-buffer',
+      title: '功能'
+    },
     children: [
       {
         path: '',
@@ -55,7 +58,7 @@ export default [
           icon: 'md-basket',
           title: '刷单'
         },
-        component: () => import('@/view/order/join-page.vue')
+        component: () => import('@/view/order/order-page.vue')
       }
     ]
   },

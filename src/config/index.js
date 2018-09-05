@@ -8,5 +8,10 @@ export default {
    *              如果不使用，则需要在路由中给需要在菜单中展示的路由设置meta: {title: 'xxx'}
    *              用来在菜单中显示文字
    */
-  useI18n: false
+  useI18n: false,
+
+  baseUrl: 'http://localhost:8111/api/v2',
+
+  localUrl: 'http://localhost:8888'
+
 }

@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie'
 // cookie保存的天数
 import config from '@/config'
-import { forEach, hasOneOf, objEqual } from '@/libs/tools'
+import {forEach, hasOneOf, objEqual} from '@/libs/tools'
 
 export const TOKEN_KEY = 'token'
 
@@ -66,7 +66,7 @@ export const getBreadCrumbList = (routeMetched, homeRoute) => {
   res = res.filter(item => {
     return !item.meta.hideInMenu
   })
-  return [Object.assign(homeRoute, { to: homeRoute.path }), ...res]
+  return [Object.assign(homeRoute, {to: homeRoute.path}), ...res]
 }
 
 export const showTitle = (item, vm) => vm.$config.useI18n ? vm.$t(item.name) : ((item.meta && item.meta.title) || item.name)
@@ -111,10 +111,10 @@ export const getHomeRoute = routers => {
  * @description 如果该newRoute已经存在则不再添加
  */
 export const getNewTagList = (list, newRoute) => {
-  const { name, path, meta } = newRoute
+  const {name, path, meta} = newRoute
   let newList = [...list]
   if (newList.findIndex(item => item.name === name) >= 0) return newList
-  else newList.push({ name, path, meta })
+  else newList.push({name, path, meta})
   return newList
 }
 
@@ -295,4 +295,31 @@ export const routeHasExist = (tagNavList, routeItem) => {
     if (routeEqual(tagNavList[index], routeItem)) res = true
   })
   return res
+}
+
+export const timeFormat = (time, format) => {
+  format = format || 'yyyy-MM-dd'
+  if (!time) {
+    return ''
+  }
+  var newDate = new Date(parseInt(time))
+  var date = {
+    'M+': newDate.getMonth() + 1,
+    'd+': newDate.getDate(),
+    'h+': newDate.getHours(),
+    'm+': newDate.getMinutes(),
+    's+': newDate.getSeconds(),
+    'q+': Math.floor((newDate.getMonth() + 3) / 3),
+    'S+': newDate.getMilliseconds()
+  }
+  if (/(y+)/i.test(format)) {
+    format = format.replace(RegExp.$1, (newDate.getFullYear() + '').substr(4 - RegExp.$1.length))
+  }
+  for (var k in date) {
+    if (new RegExp('(' + k + ')').test(format)) {
+      format = format.replace(RegExp.$1, RegExp.$1.length === 1
+        ? date[k] : ('00' + date[k]).substr(('' + date[k]).length))
+    }
+  }
+  return format
 }

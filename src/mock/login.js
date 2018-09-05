@@ -1,7 +1,7 @@
 import { getParams } from '@/libs/util'
 const USER_MAP = {
   super_admin: {
-    name: 'super_admin',
+    name: 'test',
     user_id: '1',
     access: ['super_admin', 'admin'],
     token: 'super_admin',
