@@ -26,6 +26,24 @@ export const getTaskById = ({taskId}) => {
   })
 }
 
+// save task
+export const saveTask = ({completeInfo}) => {
+  return axios.request({
+    url: baseURL.baseUrl + '/taskInfo',
+    params: completeInfo,
+    method: 'put'
+  })
+}
+
+// get code
+export const getCode = ({email}) => {
+  return axios.request({
+    url: baseURL.baseUrl + '/getVerifyCode/' + email,
+    method: 'get'
+  })
+}
+
+
 export const disConnectVpn = () => {
   Axios.get(baseURL.localUrl + '/disConnect')
     .then(function (response) {

@@ -175,24 +175,24 @@
       <div>
         <row>
           <i-col span="12">
-            <i-form :model="completeInfo" :label-width="150">
-              <form-item label="订单号">
+            <i-form :model="completeInfo" ref="complteValidate" :rules="rules" :label-width="150">
+              <form-item prop="orderNo" label="订单号">
                 <i-input v-model="completeInfo.orderNo" placeholder="请输入订单号..."
                          style="width: 300px"></i-input>
               </form-item>
-              <form-item label="礼品卡金额">
+              <form-item prop="fee" label="礼品卡金额">
                 <input-number v-model="completeInfo.fee"
                               :max="10000" :min="0" :step="2" style="width: 300px">
 
                 </input-number>
               </form-item>
-              <form-item label="信用卡金额">
+              <form-item prop="cardFee" label="信用卡金额">
                 <input-number v-model="completeInfo.cardFee"
                               :max="10000" :min="0" :step="2" style="width: 300px">
                 </input-number>
               </form-item>
               <form-item>
-                <i-button type="primary" @click="submitInfo"
+                <i-button type="primary" @click="submitInfo('complteValidate')"
                           :loading="loading.submitLoading">
                   <span v-if="!loading.submitLoading">我已完成</span>
                   <span v-else>执行中...</span>
@@ -200,8 +200,9 @@
 
               </form-item>
             </i-form>
-          </i-col>
 
+
+          </i-col>
           <i-col span="12">
             <i-form :model="completeInfo" :label-width="150">
               <form-item label="常见原因">
@@ -280,7 +281,7 @@
 
 <script>
   import {timeFormat} from '@/libs/util'
-  import {connectVpn, disConnectVpn, getTask, getTaskById} from '@/api/task.js'
+  import * as task from '@/api/task.js'
   import FormItem from "iview/src/components/form/form-item";
 
   export default {
@@ -339,7 +340,12 @@
         },
         startDate: new Date(),
         verifyCode: '', //验证码,
-        accountSign: 'LOCKED'
+        accountSign: 'LOCKED',
+        rules: {
+          orderNo: [
+            {required: true, message: '订单号不能为空', trigger: 'blur'}
+          ],
+        }
       }
     },
     created() {
@@ -362,7 +368,7 @@
         var startDate = this.startDate;
         //  this.loading.taskLoading = true;
         return new Promise((resolve, reject) => {
-          getTask({startDate}).then(res => {
+          task.getTask({startDate}).then(res => {
             const data = res.data;
             if (null === data) {
               this.$Message.info('暂无待处理的任务!')
@@ -387,7 +393,7 @@
           email: data.email
         }
         return new Promise((resolve, reject) => {
-          connectVpn({vpnInfo}).then(res => {
+          task.connectVpn({vpnInfo}).then(res => {
             const data = res.data;
             resolve(data)
           }).catch(err => {
@@ -397,9 +403,22 @@
         })
       },
       getVerifyCode() {
-
-      }
-      ,
+        let email = this.accountInfo.email;
+        if (email == '') {
+          this.$Message.warning("暂无任务无法获取邮箱言验证码")
+          return;
+        }
+        return new Promise((resolve, reject) => {
+          task.getCode({email}).then(res => {
+            const data = res.data;
+            this.verifyCode = data.data;
+            resolve(data)
+          }).catch(err => {
+            this.$Message.error("获取验证码失败")
+            reject(err)
+          })
+        })
+      },
       switchAccount() {
 
       }
@@ -408,11 +427,44 @@
 
       }
       ,
-      submitInfo() {
+      submitInfo(name) {
+        const _this = this;
+
+        if (_this.taskId == 0) {
+          _this.$Message.error("暂无处理的任务,无法提交")
+          return;
+        }
+        this.$refs[name].validate((valid) => {
+            if (valid) {
+              if (_this.completeInfo.cardFee > 0 || _this.completeInfo.fee > 0) {
+                let completeInfo = {
+                  taskId: _this.taskInfo.taskId,
+                  orderNo: _this.completeInfo.orderNo,
+                  cardFee: _this.completeInfo.cardFee,
+                  fee: _this.completeInfo.fee,
+                }
+
+                return new Promise((resolve, reject) => {
+                  task.saveTask({completeInfo}).then(res => {
+                    _this.$Message.warning('订单信息保存成功');
+                    resolve(data)
+                  }).catch(err => {
+                    _this.$Message.warning('订单信息保存失败');
+                    reject(err)
+                  })
+                })
 
 
+              } else {
+                _this.$Message.warning('请输入正确的金额');
+              }
 
-
+            }
+            else {
+              _this.$Message.warning('请填写订单号');
+            }
+          }
+        )
 
       },
       copy: function (value) {
@@ -423,7 +475,8 @@
         document.execCommand("Copy"); // 执行浏览器复制命令
         oInput.style.display = 'none';
         this.$Message.success("复制成功")
-      },
+      }
+      ,
       repulseTask() {
         this.loading.modalLoading = true;
       }
