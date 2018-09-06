@@ -14,7 +14,7 @@
           <Row>
             <FormItem label="任务日期" style="margin-top: 30px">
               <i-col span="6">
-                <DatePicker v-model="startDate" format="yyyy-MM-dd"
+                <DatePicker :value="startDate" format="yyyy-MM-dd"
                             @on-change="getOrderCount"
                             type="date" placeholder="Start Date"
                             style="width: 200px"></DatePicker>
@@ -61,17 +61,25 @@
         <Row>
           <i-col span="6">
             <form-item label="亚马逊账号">
-              <i-input v-model="accountInfo.email" :readonly="false"
+              <i-input v-model="accountInfo.email" :readonly="true"
                        @on-click="copy(accountInfo.email)"
                        icon="ios-copy-outline"
                        style="width: 300px">
               </i-input>
             </form-item>
           </i-col>
-          <i-col span="12">
+          <i-col span="6">
             <form-item label="密码">
               <i-input v-model="accountInfo.passwd" :readonly="true"
                        @on-click="copy(accountInfo.passwd)"
+                       icon="ios-copy-outline"
+                       style="width: 300px"></i-input>
+            </form-item>
+          </i-col>
+          <i-col span="6">
+            <form-item label='IP'>
+              <i-input v-model="accountInfo.ip" :readonly="true"
+                       @on-click="copy(accountInfo.ip)"
                        icon="ios-copy-outline"
                        style="width: 300px"></i-input>
             </form-item>
@@ -102,6 +110,64 @@
         </Collapse>
       </div>
     </Card>
+
+    <Collapse v-model="addressInfo.value" simple style="margin-top:10px;width:100%">
+      <Panel name="1">
+        地址信息
+        <p slot="content">
+          <row>
+            <i-form :model="addressInfo" :label-width="90">
+              <i-col span="4">
+                <form-item label="收件人姓名">
+                  <i-input v-model="addressInfo.fullName" :readonly="true"
+                           @on-click="copy(addressInfo.fullName)"
+                           icon="ios-copy-outline"
+                           style="width: 100px"></i-input>
+                </form-item>
+                <form-item label="国家">
+                  <i-input v-model="addressInfo.country" :readonly="true"
+                           @on-click="copy(addressInfo.country)"
+                           icon="ios-copy-outline"
+                           style="width: 100px"></i-input>
+                </form-item>
+                <form-item label="洲">
+                  <i-input v-model="addressInfo.stage" :readonly="true"
+                           @on-click="copy(addressInfo.stage)"
+                           icon="ios-copy-outline"
+                           style="width: 100px"></i-input>
+                </form-item>
+                <form-item label="城市">
+                  <i-input v-model="addressInfo.city" :readonly="true"
+                           @on-click="copy(addressInfo.city)"
+                           icon="ios-copy-outline"
+                           style="width: 100px"></i-input>
+                </form-item>
+              </i-col>
+              <i-col span="6">
+                <form-item label="详细地址">
+                  <i-input v-model="addressInfo.address" :readonly="true"
+                           @on-click="copy(addressInfo.address)"
+                           icon="ios-copy-outline"
+                           style="width: 200px"></i-input>
+                </form-item>
+                <form-item label="电话">
+                  <i-input v-model="addressInfo.tel" :readonly="true"
+                           @on-click="copy(addressInfo.tel)"
+                           icon="ios-copy-outline"
+                           style="width: 200px"></i-input>
+                </form-item>
+                <form-item label="邮编">
+                  <i-input v-model="addressInfo.zipCode" :readonly="true"
+                           @on-click="copy(addressInfo.zipCode)"
+                           icon="ios-copy-outline"
+                           style="width: 200px"></i-input>
+                </form-item>
+              </i-col>
+            </i-form>
+          </row>
+        </p>
+      </Panel>
+    </Collapse>
 
 
     <Card style="margin-top:10px;width:100%">
@@ -214,7 +280,7 @@
 
 <script>
   import {timeFormat} from '@/libs/util'
-  import {connectVpn, getTask, disConnectVpn} from '@/api/task.js'
+  import {connectVpn, disConnectVpn, getTask, getTaskById} from '@/api/task.js'
   import FormItem from "iview/src/components/form/form-item";
 
   export default {
@@ -235,10 +301,11 @@
         collapseValue: ['1', '2', '3'],
         accountInfo: {
           email: '',
-          passwd: '',
+          paaswd: '',
           ip: ''
         },
         taskInfo: {
+          taskId: 0,
           surplusCount: '',
           lockOrderCount: ''
         },
@@ -253,6 +320,16 @@
           count: 0,
           totalCount: 0
         },
+        addressInfo: {
+          fullName: '',
+          country: '',
+          stage: '',
+          city: '',
+          address: '',
+          tel: '',
+          zipCode: '',
+          value: '1'
+        },
         creditCardInfo: {
           name: '',
           number: '',
@@ -260,38 +337,95 @@
           csc: '',
           bindText: '绑定'
         },
-        startDate: '',
+        startDate: new Date(),
         verifyCode: '', //验证码,
         accountSign: 'LOCKED'
       }
     },
-    mounted() {
+    created() {
       this.startDate = timeFormat(new Date().getTime())
-      this.getOrderCount();
     },
     methods: {
-      getOrderCount() {
+      getOrderCount(date) {
+        this.startDate = date
         this.taskInfo.surplusCount = '待执行任务<span style="color: red">20</span>单'
         this.taskInfo.lockOrderCount = '已锁定任务<span style="color: red">20</span>单'
       },
       executeTask() {
-
-
+        this.getBasicIfo().then(data => {
+          if (null != data) {
+            this.connectVpn(data)
+          }
+        })
+      },
+      getBasicIfo() {
+        var startDate = this.startDate;
+        //  this.loading.taskLoading = true;
+        return new Promise((resolve, reject) => {
+          getTask({startDate}).then(res => {
+            const data = res.data;
+            if (null === data) {
+              this.$Message.info('暂无待处理的任务!')
+            } else {
+              this.accountInfo = data;
+              this.addressInfo = data;
+              this.addressInfo.value = '1';
+            }
+            resolve(data)
+          }).catch(err => {
+            this.loading.taskLoading = true;
+            reject(err)
+          })
+        })
+      },
+      connectVpn(data) {
+        let vpnInfo = {
+          configName: data.configName,
+          userName: data.proxyName,
+          passwd: data.proxyPasswd,
+          ip: data.ip,
+          email: data.email
+        }
+        return new Promise((resolve, reject) => {
+          connectVpn({vpnInfo}).then(res => {
+            const data = res.data;
+            resolve(data)
+          }).catch(err => {
+            this.loading.taskLoading = true;
+            reject(err)
+          })
+        })
       },
       getVerifyCode() {
 
-      },
+      }
+      ,
       switchAccount() {
 
-      },
+      }
+      ,
       bindCard() {
 
-      },
+      }
+      ,
       submitInfo() {
 
+
+
+
+
+      },
+      copy: function (value) {
+        var oInput = document.createElement('input');
+        oInput.value = value;
+        document.body.appendChild(oInput);
+        oInput.select(); // 选择对象
+        document.execCommand("Copy"); // 执行浏览器复制命令
+        oInput.style.display = 'none';
+        this.$Message.success("复制成功")
       },
       repulseTask() {
-          this.loading.modalLoading = true;
+        this.loading.modalLoading = true;
       }
     }
   }
