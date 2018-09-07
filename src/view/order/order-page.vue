@@ -301,6 +301,7 @@
         },
         collapseValue: ['1', '2', '3'],
         accountInfo: {
+          accountId: 0,
           email: '',
           paaswd: '',
           ip: ''
@@ -364,6 +365,11 @@
           }
         })
       },
+      switchAccoutAndOpenChrome() {
+        this.switchAccount().then(data => {
+
+        })
+      },
       getBasicIfo() {
         var startDate = this.startDate;
         //  this.loading.taskLoading = true;
@@ -375,7 +381,15 @@
             } else {
               this.accountInfo = data;
               this.addressInfo = data;
+              this.creditCardInfo = data;
               this.addressInfo.value = '1';
+              if (data.bindStatus) {
+                if (data.bindStatus === 'BIND') {
+                  this.creditCardInfo.bindText = '已绑定'
+                } else {
+                  this.creditCardInfo.bindText = '绑定'
+                }
+              }
             }
             resolve(data)
           }).catch(err => {
@@ -405,7 +419,7 @@
       getVerifyCode() {
         let email = this.accountInfo.email;
         if (email == '') {
-          this.$Message.warning("暂无任务无法获取邮箱言验证码")
+          this.$Message.warning("暂无任务无法获取邮箱言验证码");
           return;
         }
         return new Promise((resolve, reject) => {
@@ -414,22 +428,49 @@
             this.verifyCode = data.data;
             resolve(data)
           }).catch(err => {
-            this.$Message.error("获取验证码失败")
+            this.$Message.error("获取验证码失败");
             reject(err)
           })
         })
       },
       switchAccount() {
+        const _this = this;
+        if (_this.taskId == 0) {
+          _this.$Message.error("暂无处理的任务,无法切换账号")
+          return;
+        }
+        let taskId = _this.taskInfo.taskId;
+        let status = _this.accountSign;
+        return new Promise((resolve, reject) => {
+          task.swtichAccount({taskId, status}).then(res => {
+            _this.$Message.info(res.data.message);
+            resolve()
+          }).catch(err => {
+            _this.$Message.info(err);
+            reject(err)
+          })
+        })
 
-      }
-      ,
+      },
       bindCard() {
-
-      }
-      ,
+        const _this = this;
+        let accountId = _this.accountInfo.accountId
+        if (accountId == 0) {
+          _this.$Message.warning("暂无账号需要绑定");
+          return;
+        }
+        return new Promise((resolve, reject) => {
+          task.bindCard({accountId}).then(res => {
+            _this.$Message.info('信用卡绑定成功');
+            resolve()
+          }).catch(err => {
+            _this.$Message.warning('信用卡绑定失败');
+            reject(err)
+          })
+        })
+      },
       submitInfo(name) {
         const _this = this;
-
         if (_this.taskId == 0) {
           _this.$Message.error("暂无处理的任务,无法提交")
           return;
@@ -443,18 +484,15 @@
                   cardFee: _this.completeInfo.cardFee,
                   fee: _this.completeInfo.fee,
                 }
-
                 return new Promise((resolve, reject) => {
                   task.saveTask({completeInfo}).then(res => {
                     _this.$Message.warning('订单信息保存成功');
-                    resolve(data)
+                    resolve()
                   }).catch(err => {
                     _this.$Message.warning('订单信息保存失败');
                     reject(err)
                   })
                 })
-
-
               } else {
                 _this.$Message.warning('请输入正确的金额');
               }
@@ -479,6 +517,34 @@
       ,
       repulseTask() {
         this.loading.modalLoading = true;
+        const _this = this;
+        if (_this.taskId == 0) {
+          _this.$Message.error("暂无处理的任务,无法提交")
+          return;
+        }
+        let failReason = _this.completeInfo.failReason
+
+        let errorMsg = _this.completeInfo.errorMsg
+
+        if (failReason != '' || errorMsg.length != 0) {
+          let errorInfo = {
+            taskId: _this.taskId,
+            status: 'ERROR',
+            remark: errorMsg.join(",") + failReason
+          }
+
+          return new Promise((resolve, reject) => {
+            task.repluseTask({errorInfo}).then(res => {
+              _this.$Message.warning('打回任务成功');
+              resolve()
+            }).catch(err => {
+              _this.$Message.warning('打回任务失败');
+              reject(err)
+            })
+          })
+        } else {
+          _this.$Message.warning("请填写打回原因")
+        }
       }
     }
   }

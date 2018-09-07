@@ -11,9 +11,8 @@ import importDirective from '@/directive'
 import 'iview/dist/styles/iview.css'
 import './index.less'
 import '@/assets/icons/iconfont.css'
-import '@/mock'
+import {cnnectVpn, disConnectVpn} from '@/api/vpnutil.js'
 // 实际打包时应该不引入mock
-import env from '../config/env'
 /* eslint-disable */
 //env === 'development' ? require('@/mock') : ''
 
@@ -26,6 +25,10 @@ Vue.config.productionTip = false
  * @description 全局注册应用配置
  */
 Vue.prototype.$config = config
+Vue.prototype.$connectVpn = cnnectVpn
+Vue.prototype.disConnectVpn = disConnectVpn
+
+
 /**
  * 注册指令
  */
