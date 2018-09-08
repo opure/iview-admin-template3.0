@@ -19,10 +19,15 @@
                             type="date" placeholder="Start Date"
                             style="width: 200px"></DatePicker>
               </i-col>
-              <i-col span="6">
-                <span v-html="taskInfo.surplusCount">未执行任务0单</span>
-                <span v-html="taskInfo.lockOrderCount" class="spacing"> 已锁任务0单</span>
+              <i-col span="12">
+                <span v-html="countInfo.totalCount"></span>
+                <span v-html="countInfo.finishedCount" class="spacing"></span>
+                <span v-html="countInfo.waitingCount" class="spacing"></span>
+                <span v-html="countInfo.handlingCount" class="spacing"></span>
+                <span v-html="countInfo.endCount" class="spacing"></span>
+                <span v-html="countInfo.errorCount" class="spacing"></span>
               </i-col>
+
             </FormItem>
           </Row>
           <FormItem label="个人数据统计" style="margin-top: 10px">
@@ -47,7 +52,7 @@
             </RadioGroup>
             <Button type="primary" style="margin-left: 15px"
                     :loading="loading.switchLoading"
-                    @click="switchAccount">
+                    @click="switchAccoutAndOpenChrome">
               <span v-if="!loading.switchLoading">提交</span>
               <span v-else>更换账号中...</span>
             </Button>
@@ -92,25 +97,94 @@
       <p slot="title">刷单信息</p>
       <div>
         <Collapse v-model="collapseValue">
-          <Panel name="1">
-            史蒂夫·乔布斯
-            <p slot="content">史蒂夫·乔布斯（Steve Jobs），1955年2月24日生于美国加利福尼亚州旧金山，美国发明家、企业家、美国苹果公司联合创办人。</p>
-          </Panel>
-          <Panel name="2">
-            斯蒂夫·盖瑞·沃兹尼亚克
-            <p slot="content">斯蒂夫·盖瑞·沃兹尼亚克（Stephen Gary
-              Wozniak），美国电脑工程师，曾与史蒂夫·乔布斯合伙创立苹果电脑（今之苹果公司）。斯蒂夫·盖瑞·沃兹尼亚克曾就读于美国科罗拉多大学，后转学入美国著名高等学府加州大学伯克利分校（UC
-              Berkeley）并获得电机工程及计算机（EECS）本科学位（1987年）。</p>
-          </Panel>
-          <Panel name="3">
-            乔纳森·伊夫
+          <panel v-for="(od,index) in orderDetails" :key="index" name="index">
+            <span>排单人: {{taskInfo.createUserName}}</span>
+            <span>ASIN: {{od.asinInfo.asin}}</span>
+            <span class="span-spacing">ASIN数量:{{od.quantity}}单</span>
+            <span class="span-spacing">ASIN价格区间:{{od.asinInfo.minPrice}}~{{od.asinInfo.maxPrice}}</span>
             <p slot="content">
-              乔纳森·伊夫是一位工业设计师，现任Apple公司设计师兼资深副总裁，英国爵士。他曾参与设计了iPod，iMac，iPhone，iPad等众多苹果产品。除了乔布斯，他是对苹果那些著名的产品最有影响力的人。</p>
-          </Panel>
+            <Form :label-width="150">
+              <row>
+                <i-col span="12">
+                  <form-item label="广告位搜索">
+                    <radio-group v-model="od.adSpace == 'NOTAD' ? '否': '是'">
+                      <radio label="是"></radio>
+                      <radio label="否"></radio>
+                    </radio-group>
+                  </form-item>
+                  <form-item label="关键字">
+                    <i-input v-model="od.keyWord" :readonly="true"
+                             @on-click="copy(od.keyWord)"
+                             icon="ios-copy-outline"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="辅助关键字">
+                    <i-input v-model="od.asinInfo.keyWords.join(',')" :readonly="true"
+                             @on-click="copy(od.asinInfo.keyWords.join(','))"
+                             icon="ios-copy-outline"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="商品Asin">
+                    <i-input v-model="od.asinInfo.asin" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="优惠券">
+                    <i-input v-model="od.coupon" :readonly="true"
+                             @on-click="copy(od.coupon)"
+                             icon="ios-copy-outline"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="对手Asin">
+                    <i-input v-model="od.rivalAsin.rivalAsin" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="备注">
+                    <Input v-model="od.remark" type="textarea" :autosize="{minRows: 2,maxRows: 5}"
+                           style="width: 300px"
+                           :readonly="true"/>
+                  </form-item>
+                  <form-item label="店铺名称">
+                    <i-input v-model="od.asinInfo.sellerName" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="短链接">
+                    <i-input v-model="od.asinInfo.shortConnection" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                </i-col>
+                <i-col span="12">
+                  <form-item label="商品链接">
+                    <i-input v-model="od.asinInfo.goodsUrl" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="商品标题">
+                    <i-input v-model="od.asinInfo.goodsTitle" :readonly="true"
+                             style="width: 300px"></i-input>
+                  </form-item>
+                  <form-item label="商品属性">
+                    <span v-html="od.asinInfo.properties"></span>
+                  </form-item>
+                  <form-item label="可接受最高运费">
+                    <span v-html="od.asinInfo.maxCarriage"></span>
+                  </form-item>
+                  <form-item label="可接受最高税费">
+                    <span v-html="od.asinInfo.maxRate"></span>
+                  </form-item>
+                  <form-item label="商品页数">
+                    <span v-html="od.page"></span>
+                  </form-item>
+                  <form-item label="图片">
+                    <img :src="od.asinInfo.imageUrl"
+                         style="width :20em;">
+                  </form-item>
+                </i-col>
+              </row>
+            </Form>
+            </p>
+          </panel>
         </Collapse>
       </div>
     </Card>
-
     <Collapse v-model="addressInfo.value" simple style="margin-top:10px;width:100%">
       <Panel name="1">
         地址信息
@@ -168,8 +242,6 @@
         </p>
       </Panel>
     </Collapse>
-
-
     <Card style="margin-top:10px;width:100%">
       <p slot="title">标记任务</p>
       <div>
@@ -308,9 +380,22 @@
         },
         taskInfo: {
           taskId: 0,
-          surplusCount: '',
-          lockOrderCount: ''
+          startDate: '',
+          createUserName: ''
         },
+        countInfo: {
+          totalCount: '总任务数0单',
+          handlingCount: '已锁定任务0单',
+          waitingCount: '未执行任务0单',
+          finishedCount: '已完成任务0单',
+          errorCount: '已打回任务0单',
+          endCount: '用户终结单数',
+        },
+        userInfo: {
+          count: 0,
+          totalCount: 0
+        },
+        orderDetails: {},
         completeInfo: {
           orderNo: '',
           fee: 0,
@@ -349,17 +434,39 @@
         }
       }
     },
-    created() {
-      this.startDate = timeFormat(new Date().getTime())
+    mounted() {
+      this.getOrderCount(timeFormat(new Date().getTime()))
     },
     methods: {
       getOrderCount(date) {
-        this.startDate = date
-        this.taskInfo.surplusCount = '待执行任务<span style="color: red">20</span>单'
-        this.taskInfo.lockOrderCount = '已锁定任务<span style="color: red">20</span>单'
+        this.startDate = date;
+        return new Promise((resolve, reject) => {
+          task.execInfo({date}).then(res => {
+            const data = res.data;
+            for (let x in data) {
+              if (data[x].status === "HANDLING") {
+                this.countInfo.handlingCount = '已锁定任务<span style="color: red">' + data[x].count + '</span>单'
+              } else if (data[x].status === 'WAITING') {
+                this.countInfo.waitingCount = '待执行任务<span style="color: red">' + data[x].count + '</span>单'
+              } else if (data[x].status === 'END') {
+                this.countInfo.endCount = '用户终结任务数<span style="color: red">' + data[x].count + '</span>单'
+              } else if (data[x].status === 'ERROR') {
+                this.countInfo.errorCount = '手动打回<span style="color: red">' + data[x].count + '</span>单'
+              } else if (data[x].status === 'FINISHED') {
+                this.countInfo.finishedCount = '已完成任务数<span style="color: red">' + data[x].count + '</span>单'
+              } else {
+                this.countInfo.totalCount = '总任务数<span style="color: red">' + data[x].count + '</span>单'
+              }
+            }
+            resolve(data)
+          }).catch(err => {
+            this.loading.taskLoading = false;
+            reject(err)
+          })
+        })
       },
-      executeTask() {
-        this.getBasicIfo().then(data => {
+      executeTask(taskId) {
+        this.getBasicIfo(taskId).then(data => {
           if (null != data) {
             this.connectVpn(data)
           }
@@ -367,14 +474,19 @@
       },
       switchAccoutAndOpenChrome() {
         this.switchAccount().then(data => {
-
+          this.executeTask(this.taskInfo.taskId)
         })
       },
-      getBasicIfo() {
-        var startDate = this.startDate;
-        //  this.loading.taskLoading = true;
+      getBasicIfo(taskId) {
+        let args;
+        if (taskId) {
+          args = this.startDate;
+        } else {
+          args = taskId
+        }
+        this.loading.taskLoading = true;
         return new Promise((resolve, reject) => {
-          task.getTask({startDate}).then(res => {
+          task.getTask({args}).then(res => {
             const data = res.data;
             if (null === data) {
               this.$Message.info('暂无待处理的任务!')
@@ -382,6 +494,11 @@
               this.accountInfo = data;
               this.addressInfo = data;
               this.creditCardInfo = data;
+              if (data.bindStatus === 'BIND') {
+                this.creditCardInfo.bindText = '已绑定';
+              }
+              this.userInfo = data;
+              this.orderDetails = data.taskDetails;
               this.addressInfo.value = '1';
               if (data.bindStatus) {
                 if (data.bindStatus === 'BIND') {
@@ -393,12 +510,13 @@
             }
             resolve(data)
           }).catch(err => {
-            this.loading.taskLoading = true;
+            this.loading.taskLoading = false;
             reject(err)
           })
         })
       },
       connectVpn(data) {
+
         let vpnInfo = {
           configName: data.configName,
           userName: data.proxyName,
@@ -406,14 +524,13 @@
           ip: data.ip,
           email: data.email
         }
-        return new Promise((resolve, reject) => {
-          task.connectVpn({vpnInfo}).then(res => {
-            const data = res.data;
-            resolve(data)
-          }).catch(err => {
-            this.loading.taskLoading = true;
-            reject(err)
-          })
+        this.$connectVpn(vpnInfo).then(res => {
+          this.loading.startStatus = true;
+        }).catch(error => {
+          this.$Message.warning("vpn连接失败!");
+          this.resetInfo();
+        }).finally(() => {
+          this.loading.taskLoading = false;
         })
       },
       getVerifyCode() {
@@ -422,6 +539,7 @@
           this.$Message.warning("暂无任务无法获取邮箱言验证码");
           return;
         }
+        this.loading.verifyCodeLoading = true;
         return new Promise((resolve, reject) => {
           task.getCode({email}).then(res => {
             const data = res.data;
@@ -430,17 +548,27 @@
           }).catch(err => {
             this.$Message.error("获取验证码失败");
             reject(err)
+          }).finally(() => {
+            this.loading.verifyCodeLoading = false;
           })
         })
       },
+      resetInfo() {
+        this.accountInfo = {};
+        this.taskInfo = {};
+        this.orderDetails = {};
+        this.addressInfo = {};
+        this.creditCardInfo = {};
+        this.creditCardInfo.bindText = '绑定';
+      },
       switchAccount() {
         const _this = this;
-        if (_this.taskId == 0) {
+        let taskId = _this.taskInfo.taskId;
+        let status = _this.accountSign;
+        if (taskId == 0) {
           _this.$Message.error("暂无处理的任务,无法切换账号")
           return;
         }
-        let taskId = _this.taskInfo.taskId;
-        let status = _this.accountSign;
         return new Promise((resolve, reject) => {
           task.swtichAccount({taskId, status}).then(res => {
             _this.$Message.info(res.data.message);
@@ -486,17 +614,19 @@
                 }
                 return new Promise((resolve, reject) => {
                   task.saveTask({completeInfo}).then(res => {
-                    _this.$Message.warning('订单信息保存成功');
+                    _this.resetInfo();
+                    _this.loading.startStatus = false;
+                    _this.$Message.info('订单信息保存成功');
                     resolve()
                   }).catch(err => {
                     _this.$Message.warning('订单信息保存失败');
                     reject(err)
+                  }).finally(() => {
                   })
                 })
               } else {
                 _this.$Message.warning('请输入正确的金额');
               }
-
             }
             else {
               _this.$Message.warning('请填写订单号');
@@ -516,34 +646,43 @@
       }
       ,
       repulseTask() {
-        this.loading.modalLoading = true;
         const _this = this;
-        if (_this.taskId == 0) {
+        if (_this.taskInfo.taskId == 0) {
           _this.$Message.error("暂无处理的任务,无法提交")
+          _this.resetInfo();
+          _this.loading.confirmModal = false;
           return;
         }
+        this.loading.modalLoading = true;
         let failReason = _this.completeInfo.failReason
 
         let errorMsg = _this.completeInfo.errorMsg
 
         if (failReason != '' || errorMsg.length != 0) {
           let errorInfo = {
-            taskId: _this.taskId,
+            taskId: _this.taskInfo.taskId,
             status: 'ERROR',
-            remark: errorMsg.join(",") + failReason
+            remark: errorMsg.join(",") + '' + failReason
           }
-
           return new Promise((resolve, reject) => {
             task.repluseTask({errorInfo}).then(res => {
               _this.$Message.warning('打回任务成功');
+              _this.resetInfo();
               resolve()
             }).catch(err => {
               _this.$Message.warning('打回任务失败');
               reject(err)
+            }).finally(() => {
+              _this.loading.modalLoading = false;
+              _this.loading.startStatus = false;
+              _this.loading.confirmModal = false;
             })
           })
         } else {
-          _this.$Message.warning("请填写打回原因")
+          _this.$Message.warning("请填写打回原因");
+          _this.loading.confirmModal = false;
+          this.loading.modalLoading = false;
+          return;
         }
       }
     }
@@ -553,6 +692,10 @@
 <style>
   .spacing {
     margin-left: 20px;
+  }
+
+  .span-spacing {
+    margin-left: 5px;
   }
 
   .startButton {

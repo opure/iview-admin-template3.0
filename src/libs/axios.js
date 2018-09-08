@@ -5,7 +5,7 @@ import Cookies from 'js-cookie'
 import {TOKEN_KEY} from '@/libs/util'
 
 class httpRequest {
-  constructor () {
+  constructor() {
     this.options = {
       method: '',
       url: ''
@@ -15,14 +15,14 @@ class httpRequest {
   }
 
   // 销毁请求实例
-  destroy (url) {
+  destroy(url) {
     delete this.queue[url]
     const queue = Object.keys(this.queue)
     return queue.length
   }
 
   // 请求拦截
-  interceptors (instance, url) {
+  interceptors(instance, url) {
     // 添加请求拦截器
     instance.interceptors.request.use(config => {
       if (!config.url.includes('/users')) {
@@ -58,14 +58,19 @@ class httpRequest {
       }
       return data
     }, (error) => {
-      Message.error('服务内部错误')
-      // 对响应错误做点什么
+      if (error.response.status === 401) {
+        Cookies.remove(TOKEN_KEY)
+        window.location.href = window.location.pathname + '#/login'
+        Message.error('未登录，或登录失效，请登录')
+      } else {
+        Message.error(error.message + '服务器内部错误')
+      }
       return Promise.reject(error)
     })
   }
 
   // 创建实例
-  create () {
+  create() {
     let conf = {
       baseURL: baseURL,
       // timeout: 2000,
@@ -78,12 +83,12 @@ class httpRequest {
   }
 
   // 合并请求实例
-  mergeReqest (instances = []) {
+  mergeReqest(instances = []) {
     //
   }
 
   // 请求实例
-  request (options) {
+  request(options) {
     var instance = this.create()
     this.interceptors(instance, options.url)
     options = Object.assign({}, options)

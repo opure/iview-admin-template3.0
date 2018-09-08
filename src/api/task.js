@@ -11,9 +11,9 @@ export const connectVpnRequest = ({vpnInfo}) => {
 }
 
 // by rand()
-export const getTask = ({startDate}) => {
+export const getTask = ({args}) => {
   return axios.request({
-    url: baseURL.baseUrl + '/getTask/' + startDate,
+    url: baseURL.baseUrl + '/getTask/' + args,
     method: 'get'
   })
 }
@@ -38,7 +38,7 @@ export const saveTask = ({completeInfo}) => {
 // repluse task
 export const repluseTask = ({errorInfo}) => {
   return axios.request({
-    url: baseURL.baseUrl + '/repluseTask',
+    url: baseURL.baseUrl + '/repulseTask',
     params: errorInfo,
     method: 'put'
   })
@@ -49,6 +49,14 @@ export const bindCard = ({accountId}) => {
   return axios.request({
     url: baseURL.baseUrl + '/bindCard/' + accountId,
     method: 'put'
+  })
+}
+
+// exec info
+export const execInfo = ({date}) => {
+  return axios.request({
+    url: baseURL.baseUrl + '/execInfo/' + date,
+    method: 'get'
   })
 }
 
@@ -64,6 +72,14 @@ export const swtichAccount = ({taskId, status}) => {
 export const getCode = ({email}) => {
   return axios.request({
     url: baseURL.baseUrl + '/getVerifyCode/' + email,
+    method: 'get'
+  })
+}
+
+// unlock order
+export const unLockOrder = ({type}) => {
+  return axios.request({
+    url: baseURL.baseUrl + '/unLock/' + type,
     method: 'get'
   })
 }
