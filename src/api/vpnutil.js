@@ -6,7 +6,7 @@ export function cnnectVpn (vpnInfo = {}) {
     connectVpnRequest({vpnInfo}).then(res => {
       resolve()
     }).catch(err => {
-      Message.error('vpn连接失败!')
+      Message.error(err.response.data.data)
       reject(err)
     })
   })

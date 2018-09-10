@@ -135,7 +135,7 @@
                              style="width: 300px"></i-input>
                   </form-item>
                   <form-item label="对手Asin">
-                    <i-input v-model="od.rivalAsin.rivalAsin" :readonly="true"
+                    <i-input v-model="od.rivalAsin==null ? '无竞争对手asin' : od.rivalAsin.rivalAsin" :readonly="true"
                              style="width: 300px"></i-input>
                   </form-item>
                   <form-item label="备注">
@@ -147,10 +147,10 @@
                     <i-input v-model="od.asinInfo.sellerName" :readonly="true"
                              style="width: 300px"></i-input>
                   </form-item>
-                  <form-item label="短链接">
-                    <i-input v-model="od.asinInfo.shortConnection" :readonly="true"
-                             style="width: 300px"></i-input>
-                  </form-item>
+                  <!--    <form-item label="短链接">
+                        <i-input v-model="od.asinInfo.shortConnection" :readonly="true"
+                                 style="width: 300px"></i-input>
+                      </form-item>-->
                 </i-col>
                 <i-col span="12">
                   <form-item label="商品链接">
@@ -162,7 +162,7 @@
                              style="width: 300px"></i-input>
                   </form-item>
                   <form-item label="商品属性">
-                    <span v-html="od.asinInfo.properties"></span>
+                    <span v-html="od.asinInfo.asinP"></span>
                   </form-item>
                   <form-item label="可接受最高运费">
                     <span v-html="od.asinInfo.maxCarriage"></span>
@@ -466,9 +466,10 @@
         })
       },
       executeTask(taskId) {
+        var _this = this;
         this.getBasicIfo(taskId).then(data => {
           if (null != data) {
-            this.connectVpn(data)
+            _this.connectVpn(data)
           }
         })
       },
@@ -489,8 +490,11 @@
           task.getTask({args}).then(res => {
             const data = res.data;
             if (null === data) {
-              this.$Message.info('暂无待处理的任务!')
+              this.loading.taskLoading = false;
+              this.$Message.info('暂无待处理的任务!');
+              return;
             } else {
+              this.taskInfo = data;
               this.accountInfo = data;
               this.addressInfo = data;
               this.creditCardInfo = data;
@@ -510,8 +514,8 @@
             }
             resolve(data)
           }).catch(err => {
-            this.loading.taskLoading = false;
-            reject(err)
+            reject(err);
+          }).finally(() => {
           })
         })
       },
@@ -522,16 +526,24 @@
           userName: data.proxyName,
           passwd: data.proxyPasswd,
           ip: data.ip,
-          email: data.email
+          email: data.email,
+          title: data.taskDetails[0].asinInfo.goodsTitle,
+          webSite: data.taskDetails[0].asinInfo.webSite,
+          urlSign: data.urlSign,
+          shortUrl: data.taskDetails[0].asinInfo.shortConnection
         }
+
+
         this.$connectVpn(vpnInfo).then(res => {
           this.loading.startStatus = true;
         }).catch(error => {
           this.$Message.warning("vpn连接失败!");
+          this.loading.startStatus = false;
           this.resetInfo();
         }).finally(() => {
           this.loading.taskLoading = false;
         })
+
       },
       getVerifyCode() {
         let email = this.accountInfo.email;
@@ -560,6 +572,7 @@
         this.addressInfo = {};
         this.creditCardInfo = {};
         this.creditCardInfo.bindText = '绑定';
+        this.completeInfo = {};
       },
       switchAccount() {
         const _this = this;
@@ -571,14 +584,13 @@
         }
         return new Promise((resolve, reject) => {
           task.swtichAccount({taskId, status}).then(res => {
-            _this.$Message.info(res.data.message);
+         //   _this.$Message.info(res.data.message);
             resolve()
           }).catch(err => {
             _this.$Message.info(err);
             reject(err)
           })
         })
-
       },
       bindCard() {
         const _this = this;
@@ -599,7 +611,7 @@
       },
       submitInfo(name) {
         const _this = this;
-        if (_this.taskId == 0) {
+        if (_this.taskInfo.taskId == 0 || _this.taskInfo.taskId == null) {
           _this.$Message.error("暂无处理的任务,无法提交")
           return;
         }
